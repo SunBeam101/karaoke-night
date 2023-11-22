@@ -1,0 +1,63 @@
+<script lang="ts">
+	type Item = {
+		id: number;
+		name: string;
+	};
+
+	let items: Item[] = [
+    {
+      id: 1,
+      name: 'Codrin mares',
+    },
+    {
+      id: 2,
+      name: 'Lucian Ruscanu',
+    },
+  ];
+	let name = '';
+
+	const addItem = () => {
+		items = [
+			...items,
+			{
+				id: Math.random(),
+				name
+			}
+		];
+
+		name = '';
+	};
+
+	const remove = (item: Item) => {
+		items = items.filter((x) => x.id !== item.id);
+	};
+</script>
+
+<h1 class="text-primary text-5xl mb-10">Karaoke Night</h1>
+
+<div class="w-full flex justify-evenly">
+	<form on:submit|preventDefault={addItem}>
+		<div class="form-control w-full max-w-xs">
+			<label for="input-participant" class="label">
+				<span class="label-text">Add new participant</span>
+			</label>
+			<input
+				id="input-participant"
+				type="text"
+				placeholder="Type here"
+				class="input input-bordered input-primary"
+				bind:value={name}
+			/>
+		</div>
+	</form>
+
+	<ul>
+		{#each items as item (item.id)}
+			<li class="w-full text-right my-2 text-secondary">
+				<span>{item.name}</span>
+				<button class="text-error text-xl ml-1" on:click={() => remove(item)}>&times;</button>
+			</li>
+		{/each}
+	</ul>
+
+</div>
