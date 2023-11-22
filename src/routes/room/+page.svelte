@@ -4,32 +4,56 @@
 		name: string;
 	};
 
-	let items: Item[] = [
-    {
-      id: 1,
-      name: 'Codrin mares',
-    },
-    {
-      id: 2,
-      name: 'Lucian Ruscanu',
-    },
-  ];
+	import { io } from 'socket.io-client';
+
+	const socket = io();
+
+	socket.on('connect', () => {
+		console.log('Socket connected', socket.id);
+	});
+
+	socket.on('disconnect', (reason) => {
+		console.log('Socket diconnected', socket.id);
+
+		if (reason === 'io server disconnect') {
+			console.log('the disconnection was initiated by the server, you need to reconnect manually');
+			socket.connect();
+		}
+		// else the socket will automatically try to reconnect
+	});
+
+	socket.on('eventFromServer', (event) => {
+		console.log('EVENT', event);
+	});
+
+	socket.on('initial-data', (changes) => {
+		console.log('INITIAL DATA', changes);
+		items = [...changes];
+	});
+
+	socket.on('changes', (changes) => {
+		items = [...changes];
+	});
+
+	let items: Item[] = [];
 	let name = '';
 
 	const addItem = () => {
-		items = [
-			...items,
-			{
-				id: Math.random(),
-				name
-			}
-		];
+		const newItem = {
+			id: Math.random(),
+			name
+		};
+
+		items = [...items, newItem];
+
+		socket.emit('add-item', newItem);
 
 		name = '';
 	};
 
 	const remove = (item: Item) => {
 		items = items.filter((x) => x.id !== item.id);
+		socket.emit('remove-item', item.id);
 	};
 </script>
 
@@ -59,5 +83,4 @@
 			</li>
 		{/each}
 	</ul>
-
 </div>

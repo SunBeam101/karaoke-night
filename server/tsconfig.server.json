@@ -1,0 +1,10 @@
+{
+	"include": ["./app"],
+	"compilerOptions": {
+		"noEmit": false,
+		"allowJs": true,
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"outDir": "./dist"
+	}
+}
