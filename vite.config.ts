@@ -4,7 +4,7 @@ import { type ViteDevServer, defineConfig } from 'vite';
 const webSocketServer = {
 	name: 'webSocketServer',
 	async configureServer(server: ViteDevServer) {
-		const socketServer = await import('./server/app');
+		const socketServer = await import('./server/app/');
 
 		socketServer.setupDevServer(server);
 	}
