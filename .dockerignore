@@ -3,6 +3,5 @@ npm-debug.log
 Dockerfile
 .dockerignore
 /build
-.svelte-kit
 .vscode
 ./server/dist
