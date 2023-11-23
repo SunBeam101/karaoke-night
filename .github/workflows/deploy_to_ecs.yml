@@ -59,21 +59,14 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Download task def
-        id: download-task-def
         run: |
-          aws ecs describe-task-definition --task-definition sveltekit-app-karaoke > task-definition.json
-
-      - name: Download task def
-        id: check-task-def
-        run: |
-          cat task-definition.json
-          echo $GITHUB_OUTPUT
+          aws ecs describe-task-definition --task-definition sveltekit-app-karaoke --query taskDefinition > task-definition.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
         with:
-          task-definition: ${{ steps.download-task-def.outputs.task-definition }}
+          task-definition: task-definition.json
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.build-image.outputs.image }}
 
