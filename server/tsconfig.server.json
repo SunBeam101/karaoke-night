@@ -3,8 +3,8 @@
 	"compilerOptions": {
 		"noEmit": false,
 		"allowJs": true,
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
-		"outDir": "./dist"
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"outDir": "./dist",
 	}
 }
