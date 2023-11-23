@@ -15,3 +15,7 @@ setup(server);
 app.use(handler);
 
 server.listen(port);
+
+process.on('SIGINT', function() {
+  process.exit();
+});
