@@ -31,11 +31,13 @@
     <p class="py-4">Your room needs a name. Please add one below:</p>
     <form id="logic-form" method="POST" action="?/create" use:enhance={() => {
       return async ({ result, update }) => {
-        // @ts-expect-error TODO
-        rooms.update(prev => [...prev, result.data.room]);
         await update();
 
-        showModal = false;
+        if (result.type === 'success') {
+          // @ts-expect-error TODO
+          rooms.update(prev => [...prev, result.data.room]);
+          showModal = false;
+        } 
       }
     }}>
       <div class="form-control w-full max-w-xs">
