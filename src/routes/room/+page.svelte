@@ -29,8 +29,6 @@
 	};
 </script>
 
-<h1 class="text-primary text-5xl mb-10 underline">Karaoke Night</h1>
-
 <div class="w-full mb-8 px-8">
 	<div class="text-2xl text-primary text-center" class:text-secondary={!$isPlaying}>
 		{#if $isPlaying}
