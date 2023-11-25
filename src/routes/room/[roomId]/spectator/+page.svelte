@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import {
 		type Item,
 		participantList,
@@ -11,7 +12,7 @@
 	let current: Item | null = null;
 	let upNext: Item[] = [];
 
-	const socket = setupWebSocket();
+	const socket = setupWebSocket($page.params.roomId);
 
 	$: current = $participantList[0] ?? null;
 	$: upNext = $isPlaying ? $participantList.slice(1) : [...$participantList];
@@ -40,29 +41,31 @@
 	</div>
 </div>
 
-<div class="w-full flex justify-evenly">
-	<div class="flex flex-col items-center gap-10">
-		<form on:submit|preventDefault={addItem}>
+<div class="w-full">
+	<form on:submit|preventDefault={addItem}>
+		<div class="flex flex-row gap-4 items-end">
 			<div class="form-control w-full max-w-xs">
 				<label for="input-participant" class="label">
-					<span class="label-text">Join the fun</span>
+					<span class="label-text">Sign up on the list</span>
 				</label>
 				<input
 					id="input-participant"
 					type="text"
-					placeholder="Type your name here"
+					required
+					placeholder="Type here"
 					class="input input-bordered input-primary"
 					bind:value={name}
 				/>
 			</div>
-		</form>
-	</div>
+			<button class="btn btn-primary px-5">Join</button>
+		</div>
+	</form>
 
-	<div>
-		<div class="text-xl text-right text-primary">Up Next:</div>
-		<ul>
+	<div class="h-full md:h-80 flex flex-col relative my-4">
+		<div class="text-xl text-primary text-center md:text-left">Up Next:</div>
+		<ul class="flex flex-col max-h-full flex-wrap">
 			{#each upNext as item, idx (item.id)}
-				<li class="w-full my-2 text-right text-secondary">
+				<li class="m-2">
 					<span>{idx + 1}.</span>
 					<span>{item.name}</span>
 				</li>

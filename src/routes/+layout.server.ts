@@ -2,17 +2,17 @@ import { v4 as uuidv4 } from 'uuid';
 import type { LayoutServerLoad } from './$types';
 
 export const load = (async ({ cookies }) => {
-    const userId = cookies.get('userId');
+	const userId = cookies.get('userId');
 
-    if (userId) {
-      return {
-        userId,
-      };
-    }
+	if (userId) {
+		return {
+			userId
+		};
+	}
 
-    const uuid = uuidv4();
+	const uuid = uuidv4();
 
-    cookies.set('userId', uuidv4());
-    
-    return { userId: uuid };
+	cookies.set('userId', uuidv4());
+
+	return { userId: uuid };
 }) satisfies LayoutServerLoad;

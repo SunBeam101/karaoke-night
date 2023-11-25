@@ -22,20 +22,13 @@ export type Toggle = 'start' | 'stop';
 export const participantList = writable<Item[]>([]);
 export const isPlaying = writable<boolean>(false);
 
-export const setupWebSocket = (): Socket => {
+export const setupWebSocket = (roomId: string): Socket => {
 	const socket = io();
 
 	socket.on('connect', () => {
 		console.log('Socket connected', socket.id);
+		socket.emit('join', roomId);
 	});
-
-	// socket.io.on("reconnect_error", (error) => {
-	//   console.log('RECCONENCT ERROR', error);
-	// });
-
-	// socket.io.on("reconnect_failed", () => {
-	//   console.log('RECCONENCT FAILED');
-	// });
 
 	socket.on('disconnect', (reason) => {
 		console.log('Socket diconnected', socket.id);

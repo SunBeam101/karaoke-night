@@ -11,49 +11,69 @@ import {
 	type Toggle
 } from './helpers.js';
 
+const DELETE_ROOM_DATA_TIMEOUT = 10 * 1000;
+
+const participantList: Map<string, Item[]> = new Map();
+
+const getRoomData = (roomId: string): Item[] => {
+	return participantList.get(roomId) || [];
+};
+const setRoomData = (roomId: string, data: Item[]): void => {
+	participantList.set(roomId, [...data]);
+};
+
+const deleteTimeoutIds: Map<string, NodeJS.Timeout> = new Map();
+
 export const setup = (httpServer: ReturnType<typeof createServer>) => {
 	const io = new Server(httpServer);
 
-	let participantList: Item[] = [
-		{
-			id: 1,
-			name: 'Codrin Mares'
-		},
-		{
-			id: 2,
-			name: 'Codrin Mares 2'
-		},
-		{
-			id: 3,
-			name: 'Codrin Mares 3'
-		}
-	];
-
 	let isPlaying = false;
 
-	io.on('connection', (socket) => {
-		console.log('Server socket connected');
+	io.on('connection', async (socket) => {
+		let currentRoomId = '';
 
-		console.log('Sending initial data...');
-		socket.emit(INITIAL_DATA_TOPIC, {
-			participantList,
-			isPlaying
+		console.log('Server socket connected');
+		const sockets = await io.fetchSockets();
+		console.log('Current clients', sockets.length);
+
+		socket.on('join', (roomId: string) => {
+			socket.join(roomId);
+			currentRoomId = roomId;
+
+			const roomDeleteTimeout = deleteTimeoutIds.get(currentRoomId);
+
+			if (roomDeleteTimeout) {
+				console.log(`Found delete timeout for room ${currentRoomId}. Clearing timeout...`);
+				clearTimeout(roomDeleteTimeout);
+			}
+
+			console.log('Sending initial data...');
+			console.log(`For Room id = ${roomId}`, getRoomData(roomId));
+
+			socket.emit(INITIAL_DATA_TOPIC, {
+				participantList: getRoomData(roomId),
+				isPlaying
+			});
 		});
 
 		socket.on(ADD_ITEM_TOPIC, (newItem: Item) => {
 			console.log('New item added', newItem);
-			participantList = [...participantList, newItem];
+			setRoomData(currentRoomId, [...getRoomData(currentRoomId), newItem]);
 
 			console.log('Broadcasting changes...');
-			socket.broadcast.emit(LIST_CHANGES_TOPIC, participantList);
+			socket.to(currentRoomId).emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
 		});
 
 		socket.on(REMOVE_ITEM_TOPIC, (id: number) => {
 			console.log('Item removed', id);
-			participantList = participantList.filter((x) => x.id !== id);
+
+			setRoomData(
+				currentRoomId,
+				getRoomData(currentRoomId).filter((x) => x.id !== id)
+			);
 
 			console.log('Broadcasting changes...');
-			socket.broadcast.emit(LIST_CHANGES_TOPIC, participantList);
+			socket.broadcast.emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
 		});
 
 		socket.on(TOGGLE_PLAY_TOPIC, (toggle: Toggle) => {
@@ -63,6 +83,27 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 
 			console.log('Broadcasting changes...');
 			socket.broadcast.emit(TOGGLE_PLAY_TOPIC, toggle);
+		});
+
+		socket.on('disconnect', async () => {
+			const sockets = await io.in(currentRoomId).fetchSockets();
+
+			console.log(`Client disconnected`);
+			console.log(`Remaining clients in room ${currentRoomId} = ${sockets.length}`);
+			console.log(`Map of data`, participantList);
+
+			if (sockets.length === 0) {
+				console.log(`No more clients in room ${currentRoomId}...`);
+				console.log(`Setting timeout of ${DELETE_ROOM_DATA_TIMEOUT}ms to delete data in room...`);
+				deleteTimeoutIds.set(
+					currentRoomId,
+					setTimeout(() => {
+						participantList.delete(currentRoomId);
+						deleteTimeoutIds.delete(currentRoomId);
+						console.log(`Data in room ${currentRoomId} deleted.`);
+					}, DELETE_ROOM_DATA_TIMEOUT)
+				);
+			}
 		});
 	});
 };
