@@ -6,6 +6,7 @@ export const load = (async ({ params, cookies }) => {
 	const userId = cookies.get('userId');
 
 	if (userId !== roomId) {
+		console.log('REDIRECT', userId, roomId);
 		throw redirect(307, `/room/${params.roomId}/spectator`);
 	}
 
