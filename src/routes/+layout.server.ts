@@ -12,7 +12,7 @@ export const load = (async ({ cookies }) => {
 
 	const uuid = uuidv4();
 
-	cookies.set('userId', uuidv4(), { path: '/' });
+	cookies.set('userId', uuidv4(), { path: '/', secure: false });
 
 	return { userId: uuid };
 }) satisfies LayoutServerLoad;
