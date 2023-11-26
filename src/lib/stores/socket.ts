@@ -23,8 +23,10 @@ export type InitialData = {
 export type Toggle = 'start' | 'stop';
 
 export const participantQueue = writable<PriorityQueue>(priorityQueue());
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const participantList = derived(participantQueue, ($participantsQueue) => $participantsQueue.list().map(([_, item]) => item));
+export const participantList = derived(
+	participantQueue,
+	($participantsQueue) => $participantsQueue.list().map(([_, item]) => item) // eslint-disable-line @typescript-eslint/no-unused-vars
+);
 export const isPlaying = writable<boolean>(false);
 
 export const setupWebSocket = (roomId: string): Socket => {

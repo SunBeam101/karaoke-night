@@ -35,7 +35,7 @@
 			name
 		};
 
-		participantQueue.update(q => q.insert(newItem))
+		participantQueue.update((q) => q.insert(newItem));
 		socket.emit(ADD_ITEM_TOPIC, newItem);
 
 		name = '';
@@ -46,7 +46,7 @@
 			return;
 		}
 
-		participantQueue.update(q => q.remove(item.id))
+		participantQueue.update((q) => q.remove(item.id));
 		socket.emit(REMOVE_ITEM_TOPIC, item.id);
 	};
 

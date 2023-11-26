@@ -68,7 +68,7 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 
 		socket.on(ADD_ITEM_TOPIC, (newItem: Item) => {
 			console.log('New item added', newItem);
-			
+
 			getRoomQueue(currentRoomId).insert(newItem);
 
 			console.log('Broadcasting changes...');

@@ -24,7 +24,7 @@
 			name
 		};
 
-		participantQueue.update(q => q.insert(newItem))
+		participantQueue.update((q) => q.insert(newItem));
 		socket.emit(ADD_ITEM_TOPIC, newItem);
 
 		name = '';
