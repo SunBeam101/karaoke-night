@@ -5,7 +5,8 @@
 		participantList,
 		setupWebSocket,
 		isPlaying,
-		ADD_ITEM_TOPIC
+		ADD_ITEM_TOPIC,
+		participantQueue
 	} from '$lib/stores/socket';
 
 	let name = '';
@@ -23,7 +24,7 @@
 			name
 		};
 
-		participantList.set([...$participantList, newItem]);
+		participantQueue.update(q => q.insert(newItem))
 		socket.emit(ADD_ITEM_TOPIC, newItem);
 
 		name = '';

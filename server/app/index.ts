@@ -8,18 +8,28 @@ import {
 	REMOVE_ITEM_TOPIC,
 	INITIAL_DATA_TOPIC,
 	TOGGLE_PLAY_TOPIC,
-	type Toggle
+	type Toggle,
+	type PriorityItem
 } from './helpers.js';
+import { priorityQueue, type PriorityQueue } from './PriorityQueue.js';
 
-const DELETE_ROOM_DATA_TIMEOUT = 10 * 1000;
+const DELETE_ROOM_DATA_TIMEOUT = 60 * 1000;
 
-const participantList: Map<string, Item[]> = new Map();
+const participantList: Map<string, PriorityQueue> = new Map();
 
-const getRoomData = (roomId: string): Item[] => {
-	return participantList.get(roomId) || [];
+const getRoomQueue = (roomId: string): PriorityQueue => {
+	let queue = participantList.get(roomId);
+
+	if (!queue) {
+		queue = priorityQueue();
+		participantList.set(roomId, queue);
+	}
+
+	return queue;
 };
-const setRoomData = (roomId: string, data: Item[]): void => {
-	participantList.set(roomId, [...data]);
+
+const getRoomData = (roomId: string): PriorityItem[] => {
+	return getRoomQueue(roomId).list();
 };
 
 const deleteTimeoutIds: Map<string, NodeJS.Timeout> = new Map();
@@ -58,7 +68,8 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 
 		socket.on(ADD_ITEM_TOPIC, (newItem: Item) => {
 			console.log('New item added', newItem);
-			setRoomData(currentRoomId, [...getRoomData(currentRoomId), newItem]);
+			
+			getRoomQueue(currentRoomId).insert(newItem);
 
 			console.log('Broadcasting changes...');
 			socket.to(currentRoomId).emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
@@ -67,12 +78,9 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 		socket.on(REMOVE_ITEM_TOPIC, (id: number) => {
 			console.log('Item removed', id);
 
-			setRoomData(
-				currentRoomId,
-				getRoomData(currentRoomId).filter((x) => x.id !== id)
-			);
+			getRoomQueue(currentRoomId).remove(id);
 
-			console.log('Broadcasting changes...');
+			console.log('Broadcasting changes...', getRoomData(currentRoomId));
 			socket.broadcast.emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
 		});
 

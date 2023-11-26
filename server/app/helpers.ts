@@ -9,8 +9,10 @@ export type Item = {
 	id: number;
 };
 
+export type PriorityItem = [number, Item];
+
 export type InitialData = {
-	participantList: Item[];
+	participantList: PriorityItem[];
 	isPlaying: boolean;
 };
 
