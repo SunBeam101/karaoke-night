@@ -7,7 +7,8 @@
 		REMOVE_ITEM_TOPIC,
 		isPlaying,
 		TOGGLE_PLAY_TOPIC,
-		setupWebSocket
+		setupWebSocket,
+		participantQueue
 	} from '$lib/stores/socket';
 	import type { Socket } from 'socket.io-client';
 	import { onMount } from 'svelte';
@@ -34,7 +35,7 @@
 			name
 		};
 
-		participantList.set([...$participantList, newItem]);
+		participantQueue.update(q => q.insert(newItem))
 		socket.emit(ADD_ITEM_TOPIC, newItem);
 
 		name = '';
@@ -45,7 +46,7 @@
 			return;
 		}
 
-		participantList.set($participantList.filter((x) => x.id !== item.id));
+		participantQueue.update(q => q.remove(item.id))
 		socket.emit(REMOVE_ITEM_TOPIC, item.id);
 	};
 

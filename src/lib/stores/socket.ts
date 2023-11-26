@@ -1,5 +1,6 @@
+import { priorityQueue, type PriorityQueue } from '$lib/helpers/PriorityQueue';
 import { type Socket, io } from 'socket.io-client';
-import { writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 
 export const INITIAL_DATA_TOPIC = 'INITIAL_DATA';
 export const ADD_ITEM_TOPIC = 'ADD_ITEM';
@@ -12,14 +13,18 @@ export type Item = {
 	id: number;
 };
 
+export type PriorityItem = [number, Item];
+
 export type InitialData = {
-	participantList: Item[];
+	participantList: PriorityItem[];
 	isPlaying: boolean;
 };
 
 export type Toggle = 'start' | 'stop';
 
-export const participantList = writable<Item[]>([]);
+export const participantQueue = writable<PriorityQueue>(priorityQueue());
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const participantList = derived(participantQueue, ($participantsQueue) => $participantsQueue.list().map(([_, item]) => item));
 export const isPlaying = writable<boolean>(false);
 
 export const setupWebSocket = (roomId: string): Socket => {
@@ -43,12 +48,12 @@ export const setupWebSocket = (roomId: string): Socket => {
 	socket.on(INITIAL_DATA_TOPIC, (initialData: InitialData) => {
 		console.log('GOT INITIAL DATA', initialData);
 
-		participantList.set([...initialData.participantList]);
+		participantQueue.update((prev) => prev.copy(initialData.participantList));
 		isPlaying.set(initialData.isPlaying);
 	});
 
-	socket.on(LIST_CHANGES_TOPIC, (changes: Item[]) => {
-		participantList.set([...changes]);
+	socket.on(LIST_CHANGES_TOPIC, (changes: PriorityItem[]) => {
+		participantQueue.update((prev) => prev.copy(changes));
 	});
 
 	socket.on(TOGGLE_PLAY_TOPIC, (toggle: Toggle) => {
