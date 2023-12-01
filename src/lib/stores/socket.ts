@@ -9,8 +9,8 @@ export const LIST_CHANGES_TOPIC = 'LIST_CHANGES';
 export const TOGGLE_PLAY_TOPIC = 'TOGGLE_PLAY';
 
 export type Item = {
+	id: string;
 	name: string;
-	id: number;
 };
 
 export type PriorityItem = [number, Item];
@@ -28,6 +28,7 @@ export const participantList = derived(
 	($participantsQueue) => $participantsQueue.list().map(([_, item]) => item) // eslint-disable-line @typescript-eslint/no-unused-vars
 );
 export const isPlaying = writable<boolean>(false);
+export const isLoading = writable<boolean>(true);
 
 export const setupWebSocket = (roomId: string): Socket => {
 	const socket = io();
@@ -52,6 +53,7 @@ export const setupWebSocket = (roomId: string): Socket => {
 
 		participantQueue.update((prev) => prev.copy(initialData.participantList));
 		isPlaying.set(initialData.isPlaying);
+		isLoading.set(false);
 	});
 
 	socket.on(LIST_CHANGES_TOPIC, (changes: PriorityItem[]) => {

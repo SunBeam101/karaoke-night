@@ -5,8 +5,8 @@ export const LIST_CHANGES_TOPIC = 'LIST_CHANGES';
 export const TOGGLE_PLAY_TOPIC = 'TOGGLE_PLAY';
 
 export type Item = {
+	id: string;
 	name: string;
-	id: number;
 };
 
 export type PriorityItem = [number, Item];
