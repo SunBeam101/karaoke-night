@@ -9,29 +9,29 @@ class UserManager {
 	userNames: Set<string> = new Set();
 
 	add(userId: UserId, user: User): User {
-    if (!user.name) {
-      throw Error('Name is required.');
-    }
+		if (!user.name) {
+			throw Error('Name is required.');
+		}
 
 		if (this.userNames.has(user.name)) {
 			throw Error('Username already exists. Please choose another one.');
 		}
 
 		this.users.set(userId, user);
-    this.userNames.add(user.name);
+		this.userNames.add(user.name);
 
 		return user;
 	}
 
-  get(userId: UserId): User | null {
-    const user = this.users.get(userId);
+	get(userId: UserId): User | null {
+		const user = this.users.get(userId);
 
-    if (!user) {
-      return null;
-    }
+		if (!user) {
+			return null;
+		}
 
-    return user;
-  }
+		return user;
+	}
 
 	delete(userId: string): void {
 		const user = this.users.get(userId);

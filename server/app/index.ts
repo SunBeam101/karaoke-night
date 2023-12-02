@@ -75,7 +75,7 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 			socket.to(currentRoomId).emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
 		});
 
-		socket.on(REMOVE_ITEM_TOPIC, (id: number) => {
+		socket.on(REMOVE_ITEM_TOPIC, (id: string) => {
 			console.log('Item removed', id);
 
 			getRoomQueue(currentRoomId).remove(id);

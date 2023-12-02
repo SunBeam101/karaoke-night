@@ -3,7 +3,6 @@
 	import {
 		participantList,
 		type Item,
-		ADD_ITEM_TOPIC,
 		REMOVE_ITEM_TOPIC,
 		isPlaying,
 		TOGGLE_PLAY_TOPIC,
@@ -13,8 +12,8 @@
 	import type { Socket } from 'socket.io-client';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import LoadingCheck from '$lib/components/LoadingCheck.svelte';
 
-	let name = '';
 	let current: Item | null = null;
 	let upNext: Item[] = [];
 
@@ -28,18 +27,6 @@
 
 	$: current = $participantList[0] ?? null;
 	$: upNext = $isPlaying ? $participantList.slice(1) : [...$participantList];
-
-	const addItem = () => {
-		const newItem = {
-			id: Math.random(),
-			name
-		};
-
-		participantQueue.update((q) => q.insert(newItem));
-		socket.emit(ADD_ITEM_TOPIC, newItem);
-
-		name = '';
-	};
 
 	const remove = (item: Item | null) => {
 		if (!item) {
@@ -62,44 +49,8 @@
 	};
 </script>
 
-<div class="w-full mb-14">
-	<div class="text-3xl text-primary text-center" class:text-secondary={!$isPlaying}>
-		{#if $isPlaying}
-			<span>On the stage:</span>
-			<span>{current?.name ?? ''}</span>
-		{:else}
-			<span>We're on a short break...</span>
-		{/if}
-	</div>
-</div>
-
-<div class="w-full flex gap-20">
-	<div class="flex flex-col items-center">
-		<QrImage url={`${$page.url.href}/spectator`} />
-		<div class="text-primary text-center mt-3 text-xl font-bold">Join Now!</div>
-		<div class="text-primary text-center mt-3 text-lg">Scan the QR code to join the fun!</div>
-	</div>
-
+<div class="w-full my-14 px-24 flex flex-row items-center gap-10">
 	<div class="flex flex-col gap-6">
-		<form on:submit|preventDefault={addItem}>
-			<div class="flex flex-row gap-4 items-end">
-				<div class="form-control w-full max-w-xs">
-					<label for="input-participant" class="label">
-						<span class="label-text">Add new participant</span>
-					</label>
-					<input
-						id="input-participant"
-						type="text"
-						required
-						placeholder="Type here"
-						class="input input-bordered input-primary"
-						bind:value={name}
-					/>
-				</div>
-				<button class="btn btn-primary px-5">Add</button>
-			</div>
-		</form>
-
 		<div class="flex gap-4">
 			{#if $isPlaying}
 				<button class="btn btn-error btn-lg" on:click={togglePlay}>Stop</button>
@@ -111,16 +62,36 @@
 		</div>
 	</div>
 
-	<div class="h-96 flex flex-col relative">
-		<div class="text-xl text-primary">Up Next:</div>
-		<ul class="flex flex-col max-h-full flex-wrap">
-			{#each upNext as item, idx (item.id)}
-				<li class="m-2">
-					<span>{idx + 1}.</span>
-					<span>{item.name}</span>
-					<button class="text-error text-xl ml-1" on:click={() => remove(item)}>&times;</button>
-				</li>
-			{/each}
-		</ul>
+	<div class="text-3xl text-primary text-center" class:text-secondary={!$isPlaying}>
+		{#if $isPlaying}
+			<span>On the stage:</span>
+			<span>{current?.userName || ''} - {current?.songName || ''}</span>
+		{:else}
+			<span>We're on a short break...</span>
+		{/if}
+	</div>
+</div>
+
+<div class="w-full flex justify-evenly gap-20">
+	<div class="flex flex-col items-center">
+		<QrImage url={`${$page.url.href}/spectator`} />
+		<div class="text-primary text-center mt-3 text-xl font-bold">Join Now!</div>
+		<div class="text-primary text-center mt-3 text-lg">Scan the QR code to join the fun!</div>
+	</div>
+
+	<div class="h-96 flex flex-col">
+		<div class="text-xl text-primary mb-2">Up Next:</div>
+		<div class="h-full w-64 relative flex items-center justify-center">
+			<LoadingCheck>
+				<div class="h-full flex flex-col gap-3 overflow-auto absolute top-0 left-0 right-0">
+					{#each upNext as item (item.id)}
+						<div class="w-full btn btn-primary join-item">
+							<span>{item.songName} ({item.userName})</span>
+							<button class="text-2xl ml-1 mb-1" on:click={() => remove(item)}>&times;</button>
+						</div>
+					{/each}
+				</div>
+			</LoadingCheck>
+		</div>
 	</div>
 </div>

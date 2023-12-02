@@ -10,7 +10,9 @@ export const TOGGLE_PLAY_TOPIC = 'TOGGLE_PLAY';
 
 export type Item = {
 	id: string;
-	name: string;
+	userName: string;
+	songName: string;
+	songUrl?: string;
 };
 
 export type PriorityItem = [number, Item];

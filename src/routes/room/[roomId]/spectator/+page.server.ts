@@ -7,8 +7,8 @@ export const load = (async ({ cookies, params }) => {
 	const currentUser = roomManager.get(cookies.get('userId') || '');
 
 	return {
-		user: currentUser,
-	}
+		user: currentUser
+	};
 }) satisfies PageServerLoad;
 
 export const actions = {
@@ -25,8 +25,8 @@ export const actions = {
 
 		const user: User = {
 			id: userId,
-			name: userName.toString(),
-		}
+			name: userName.toString()
+		};
 
 		try {
 			roomManager.add(userId, user);
