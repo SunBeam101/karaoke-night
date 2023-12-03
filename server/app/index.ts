@@ -9,20 +9,22 @@ import {
 	INITIAL_DATA_TOPIC,
 	TOGGLE_PLAY_TOPIC,
 	type Toggle,
-	type PriorityItem
+	type PriorityItem,
+	HISTORY_CHANGES_TOPIC
 } from './helpers.js';
 import { priorityQueue, type PriorityQueue } from './PriorityQueue.js';
 
 const DELETE_ROOM_DATA_TIMEOUT = 60 * 1000;
 
-const participantList: Map<string, PriorityQueue> = new Map();
+const ongoingParticipants: Map<string, PriorityQueue> = new Map();
+const participantsHistory: Map<string, Item[]> = new Map();
 
 const getRoomQueue = (roomId: string): PriorityQueue => {
-	let queue = participantList.get(roomId);
+	let queue = ongoingParticipants.get(roomId);
 
 	if (!queue) {
 		queue = priorityQueue();
-		participantList.set(roomId, queue);
+		ongoingParticipants.set(roomId, queue);
 	}
 
 	return queue;
@@ -61,7 +63,8 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 			console.log(`For Room id = ${roomId}`, getRoomData(roomId));
 
 			socket.emit(INITIAL_DATA_TOPIC, {
-				participantList: getRoomData(roomId),
+				ongoingParticipants: getRoomData(roomId),
+				participantsHistory: participantsHistory.get(currentRoomId) || [],
 				isPlaying
 			});
 		});
@@ -75,13 +78,22 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 			socket.to(currentRoomId).emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
 		});
 
-		socket.on(REMOVE_ITEM_TOPIC, (id: number) => {
+		socket.on(REMOVE_ITEM_TOPIC, (id: string) => {
 			console.log('Item removed', id);
 
-			getRoomQueue(currentRoomId).remove(id);
+			const roomQueue = getRoomQueue(currentRoomId);
+			const removedItem = roomQueue.get(id);
+
+			if (removedItem) {
+				const currentHistory = participantsHistory.get(currentRoomId);
+				participantsHistory.set(currentRoomId, [removedItem[1], ...(currentHistory || [])]);
+			}
+
+			roomQueue.remove(id);
 
 			console.log('Broadcasting changes...', getRoomData(currentRoomId));
 			socket.broadcast.emit(LIST_CHANGES_TOPIC, getRoomData(currentRoomId));
+			socket.broadcast.emit(HISTORY_CHANGES_TOPIC, participantsHistory.get(currentRoomId));
 		});
 
 		socket.on(TOGGLE_PLAY_TOPIC, (toggle: Toggle) => {
@@ -98,7 +110,7 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 
 			console.log(`Client disconnected`);
 			console.log(`Remaining clients in room ${currentRoomId} = ${sockets.length}`);
-			console.log(`Map of data`, participantList);
+			console.log(`Map of data`, ongoingParticipants);
 
 			if (sockets.length === 0) {
 				console.log(`No more clients in room ${currentRoomId}...`);
@@ -106,7 +118,8 @@ export const setup = (httpServer: ReturnType<typeof createServer>) => {
 				deleteTimeoutIds.set(
 					currentRoomId,
 					setTimeout(() => {
-						participantList.delete(currentRoomId);
+						ongoingParticipants.delete(currentRoomId);
+						participantsHistory.delete(currentRoomId);
 						deleteTimeoutIds.delete(currentRoomId);
 						console.log(`Data in room ${currentRoomId} deleted.`);
 					}, DELETE_ROOM_DATA_TIMEOUT)
