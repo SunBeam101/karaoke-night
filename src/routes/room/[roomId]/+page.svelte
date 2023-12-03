@@ -1,13 +1,13 @@
 <script lang="ts">
 	import QrImage from '$lib/components/QRImage.svelte';
 	import {
-		participantList,
+		ongoingParticipants,
 		type Item,
 		REMOVE_ITEM_TOPIC,
 		isPlaying,
 		TOGGLE_PLAY_TOPIC,
 		setupWebSocket,
-		participantQueue
+		ongoingParticipantsQueue
 	} from '$lib/stores/socket';
 	import type { Socket } from 'socket.io-client';
 	import { onMount } from 'svelte';
@@ -25,15 +25,15 @@
 		return () => socket.disconnect();
 	});
 
-	$: current = $participantList[0] ?? null;
-	$: upNext = $isPlaying ? $participantList.slice(1) : [...$participantList];
+	$: current = $ongoingParticipants[0] ?? null;
+	$: upNext = $isPlaying ? $ongoingParticipants.slice(1) : [...$ongoingParticipants];
 
 	const remove = (item: Item | null) => {
 		if (!item) {
 			return;
 		}
 
-		participantQueue.update((q) => q.remove(item.id));
+		ongoingParticipantsQueue.update((q) => q.remove(item.id));
 		socket.emit(REMOVE_ITEM_TOPIC, item.id);
 	};
 

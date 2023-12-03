@@ -3,6 +3,7 @@ import type { Item, PriorityItem } from './helpers.js';
 export interface PriorityQueue {
 	insert(item: Item): void;
 	remove(id: string): void;
+	get(id: string): PriorityItem | undefined;
 	list: () => PriorityItem[];
 	peek(): Item | null;
 	pop(): Item | null;
@@ -39,6 +40,10 @@ export const priorityQueue = (): PriorityQueue => {
 					return;
 				}
 			}
+		},
+
+		get: (id: string) => {
+			return data.find((x) => x[1].id === id);
 		},
 
 		remove: (id: string) => {

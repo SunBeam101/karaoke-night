@@ -6,19 +6,23 @@
 	import LoadingCheck from '$lib/components/LoadingCheck.svelte';
 	import {
 		type Item,
-		participantList,
+		ongoingParticipants,
 		setupWebSocket,
 		isPlaying,
 		ADD_ITEM_TOPIC,
-		participantQueue
+		ongoingParticipantsQueue,
+		participantsHistory
 	} from '$lib/stores/socket';
 	import type { ActionData, PageData } from './$types';
+
+	type Tab = 'upNext' | 'history';
 
 	let current: Item | null = null;
 	let userDialog: HTMLDialogElement;
 	let songDialog: HTMLDialogElement;
 	export let form: ActionData;
 	export let data: PageData;
+	let currentTab: Tab = 'upNext';
 
 	onMount(() => {
 		if (!data.user) {
@@ -28,7 +32,7 @@
 
 	const socket = setupWebSocket($page.params.roomId);
 
-	$: current = $participantList[0] ?? null;
+	$: current = $ongoingParticipants[0] ?? null;
 
 	const addItem = (
 		event: SubmitEvent & {
@@ -43,11 +47,15 @@
 			songUrl: formData.get('songUrl')?.toString() || undefined
 		};
 
-		participantQueue.update((q) => q.insert(newItem));
+		ongoingParticipantsQueue.update((q) => q.insert(newItem));
 		socket.emit(ADD_ITEM_TOPIC, newItem);
 
 		event.currentTarget.reset();
 		songDialog.close();
+	};
+
+	const changeTab = (tab: Tab) => {
+		currentTab = tab;
 	};
 </script>
 
@@ -132,22 +140,48 @@
 	</form>
 </dialog>
 
-<div class="h-screen px-4 pt-8 pb-20">
+<div class="h-screen px-4 pt-4 pb-36">
+	<div role="tablist" class="tabs tabs-boxed tabs-lg mb-2">
+		<button
+			role="tab"
+			class="tab"
+			class:tab-active={currentTab === 'upNext'}
+			on:click={() => changeTab('upNext')}>Up Next</button
+		>
+		<button
+			role="tab"
+			class="tab"
+			class:tab-active={currentTab === 'history'}
+			on:click={() => changeTab('history')}>History</button
+		>
+	</div>
+
 	<div class="h-full relative flex items-center justify-center">
 		<LoadingCheck>
 			<div class="h-full flex flex-col gap-3 overflow-auto absolute top-0 left-0 right-0">
-				{#if !$participantList.length}
-					<div class="text-3xl text-primary">List is empty...</div>
-					<div class="text-3xl text-primary">Join via the button below 👇</div>
+				{#if currentTab === 'upNext'}
+					{#if !$ongoingParticipants.length}
+						<div class="text-3xl text-primary">List is empty...</div>
+						<div class="text-3xl text-primary">Join via the button below 👇</div>
+					{/if}
+					{#each $ongoingParticipants as item (item.id)}
+						<div
+							class="w-full btn btn-primary join-item"
+							class:btn-accent={$isPlaying && item.id === current?.id}
+						>
+							<span>{item.songName} ({item.userName})</span>
+						</div>
+					{/each}
+				{:else if currentTab === 'history'}
+					{#if !$participantsHistory.length}
+						<div class="text-3xl text-primary">History is empty...</div>
+					{/if}
+					{#each $participantsHistory as historyItem (historyItem.id)}
+						<div class="w-full btn btn-ghost join-item">
+							<span>{historyItem.songName} ({historyItem.userName})</span>
+						</div>
+					{/each}
 				{/if}
-				{#each $participantList as item (item.id)}
-					<div
-						class="w-full btn btn-primary join-item"
-						class:btn-accent={$isPlaying && item.id === current?.id}
-					>
-						<span>{item.songName} ({item.userName})</span>
-					</div>
-				{/each}
 			</div>
 		</LoadingCheck>
 	</div>
@@ -157,7 +191,10 @@
 	<button class="bg-secondary text-secondary-content rounded-tl-xl">
 		<span class="btm-nav-label text-xl">Vote</span>
 	</button>
-	<button class="bg-primary text-primary-content rounded-tr-xl" on:click={() => songDialog.showModal()}>
+	<button
+		class="bg-primary text-primary-content rounded-tr-xl"
+		on:click={() => songDialog.showModal()}
+	>
 		<span class="btm-nav-label text-xl">Join</span>
 	</button>
 </div>
