@@ -6,28 +6,34 @@ export const INITIAL_DATA_TOPIC = 'INITIAL_DATA';
 export const ADD_ITEM_TOPIC = 'ADD_ITEM';
 export const REMOVE_ITEM_TOPIC = 'REMOVE_ITEM';
 export const LIST_CHANGES_TOPIC = 'LIST_CHANGES';
+export const HISTORY_CHANGES_TOPIC = 'HISTORY_CHANGES';
 export const TOGGLE_PLAY_TOPIC = 'TOGGLE_PLAY';
 
 export type Item = {
-	name: string;
-	id: number;
+	id: string;
+	userName: string;
+	songName: string;
+	songUrl?: string;
 };
 
 export type PriorityItem = [number, Item];
 
 export type InitialData = {
-	participantList: PriorityItem[];
+	ongoingParticipants: PriorityItem[];
+	participantsHistory: Item[];
 	isPlaying: boolean;
 };
 
 export type Toggle = 'start' | 'stop';
 
-export const participantQueue = writable<PriorityQueue>(priorityQueue());
-export const participantList = derived(
-	participantQueue,
+export const ongoingParticipantsQueue = writable<PriorityQueue>(priorityQueue());
+export const ongoingParticipants = derived(
+	ongoingParticipantsQueue,
 	($participantsQueue) => $participantsQueue.list().map(([_, item]) => item) // eslint-disable-line @typescript-eslint/no-unused-vars
 );
+export const participantsHistory = writable<Item[]>([]);
 export const isPlaying = writable<boolean>(false);
+export const isLoading = writable<boolean>(true);
 
 export const setupWebSocket = (roomId: string): Socket => {
 	const socket = io();
@@ -48,14 +54,18 @@ export const setupWebSocket = (roomId: string): Socket => {
 	});
 
 	socket.on(INITIAL_DATA_TOPIC, (initialData: InitialData) => {
-		console.log('GOT INITIAL DATA', initialData);
-
-		participantQueue.update((prev) => prev.copy(initialData.participantList));
+		ongoingParticipantsQueue.update((prev) => prev.copy(initialData.ongoingParticipants));
+		participantsHistory.set(initialData.participantsHistory);
 		isPlaying.set(initialData.isPlaying);
+		isLoading.set(false);
 	});
 
 	socket.on(LIST_CHANGES_TOPIC, (changes: PriorityItem[]) => {
-		participantQueue.update((prev) => prev.copy(changes));
+		ongoingParticipantsQueue.update((prev) => prev.copy(changes));
+	});
+
+	socket.on(HISTORY_CHANGES_TOPIC, (changes: Item[]) => {
+		participantsHistory.set(changes);
 	});
 
 	socket.on(TOGGLE_PLAY_TOPIC, (toggle: Toggle) => {

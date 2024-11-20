@@ -2,7 +2,8 @@ import type { Item, PriorityItem } from './helpers.js';
 
 export interface PriorityQueue {
 	insert(item: Item): void;
-	remove(id: number): void;
+	remove(id: string): void;
+	get(id: string): PriorityItem | undefined;
 	list: () => PriorityItem[];
 	peek(): Item | null;
 	pop(): Item | null;
@@ -17,7 +18,7 @@ export const priorityQueue = (): PriorityQueue => {
 	return {
 		insert: (item: Item) => {
 			const priority = data.reduce(
-				(count, current) => (current[1].name === item.name ? count + 1 : count),
+				(count, current) => (current[1].userName === item.userName ? count + 1 : count),
 				0
 			);
 
@@ -41,7 +42,11 @@ export const priorityQueue = (): PriorityQueue => {
 			}
 		},
 
-		remove: (id: number) => {
+		get: (id: string) => {
+			return data.find((x) => x[1].id === id);
+		},
+
+		remove: (id: string) => {
 			const idx = data.findIndex((x) => x[1].id === id);
 
 			if (idx === -1) {
